@@ -8,8 +8,8 @@
 
 import Foundation
 
-
-class Item {
+//Instead of writing Encodable, Decodable just write Codable
+class Item : Codable {
     var title : String = ""
     var done : Bool = false 
 }

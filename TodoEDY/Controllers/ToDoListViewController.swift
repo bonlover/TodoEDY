@@ -11,29 +11,17 @@ import UIKit
 class ToDoListViewController: UITableViewController {
 
     var itemArray = [Item]()
-    let defaults = UserDefaults.standard
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+
+    
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let newItem = Item()
-        newItem.title = "Find mike"
-        itemArray.append(newItem)
+//        print(dataFilePath)
         
-        let newItem1 = Item()
-        newItem1.title = "Find yun"
-        itemArray.append(newItem1)
-        
-        let newItem2 = Item()
-        newItem2.title = "Find List"
-        itemArray.append(newItem2)
-        
-        
-        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
-
-            itemArray = items
-
-        }
+        loadItems()
         
     }
     
@@ -46,9 +34,7 @@ class ToDoListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        print("CellForRowAtIndexPath call")
-        
-//        let cell = UITableViewCell(style: .default, reuseIdentifier: "TiDoItemCell")
+
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
        
         let item = itemArray[indexPath.row]
@@ -57,20 +43,10 @@ class ToDoListViewController: UITableViewController {
         //ternary operation ==>
         //value = condition ? valueIfTrue : valueIfFalse
         
-//        cell.accessoryType = item.done == true ? .checkmark : .none
         cell.accessoryType = item.done ? .checkmark : .none
-
-        
-//        if item.done == true {
-//            cell.accessoryType = .checkmark
-//        }
-//        else {
-//            cell.accessoryType = .none
-//        }
-        
         return cell
     }
-
+ 
     
     //Mark - TableView Delegate Methods
     
@@ -80,22 +56,7 @@ class ToDoListViewController: UITableViewController {
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-//        if itemArray[indexPath.row].done == false {
-//
-//            itemArray[indexPath.row].done = true
-//        }
-//        else {
-//            itemArray[indexPath.row].done = false
-//        }
-        
-//        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-//
-//            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-//        }
-//        else {
-//            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-//        }
-        tableView.reloadData()
+        saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
         
         
@@ -114,25 +75,48 @@ class ToDoListViewController: UITableViewController {
             newItem.title = textField.text!
             
             self.itemArray.append(newItem)
-            
-            self.defaults.set(self.itemArray, forKey: "TodoListArray")
-            
-            self.tableView.reloadData()
-            
+            self.saveItems()
+          
         }
         
         alert.addTextField { (alertTextField) in
             
             alertTextField.placeholder = "Create new item"
             textField = alertTextField
-//            print(alertTextField.text)
-//            print("Now")
-            
+  
         }
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
         
         
+    }
+    
+    //MARK - Data manupulation methods
+    
+    func saveItems() {
+        let encoder =  PropertyListEncoder()
+        
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        }
+        catch {
+            print("Error encoding item array, \(error)")
+        }
+        
+        self.tableView.reloadData()
+    }
+    
+    func loadItems() {
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            } catch {
+                print("Error decoding items array, \(error)")
+            }
+        }
     }
     
 }
